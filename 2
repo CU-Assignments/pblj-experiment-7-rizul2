@@ -1,0 +1,93 @@
+import java.sql.*;
+import java.util.*;
+
+class Student {
+    int id;
+    String name, dept;
+    float marks;
+
+    Student(int id, String name, String dept, float marks) {
+        this.id = id;
+        this.name = name;
+        this.dept = dept;
+        this.marks = marks;
+    }
+}
+
+class StudentController {
+    Connection conn;
+
+    StudentController() {
+        try {
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/your_db", "your_user", "your_pass");
+            conn.createStatement().execute("CREATE TABLE IF NOT EXISTS students (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), dept VARCHAR(100), marks FLOAT)");
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    void add(Student s) {
+        try {
+            PreparedStatement st = conn.prepareStatement("INSERT INTO students(name, dept, marks) VALUES (?, ?, ?)");
+            st.setString(1, s.name); st.setString(2, s.dept); st.setFloat(3, s.marks); st.executeUpdate();
+            System.out.println("Student added.");
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    void view() {
+        try {
+            ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM students");
+            while (rs.next()) System.out.printf("ID: %d, Name: %s, Dept: %s, Marks: %.2f\n",
+                    rs.getInt(1), rs.getString(2), rs.getString(3), rs.getFloat(4));
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    void update(Student s) {
+        try {
+            PreparedStatement st = conn.prepareStatement("UPDATE students SET name=?, dept=?, marks=? WHERE id=?");
+            st.setString(1, s.name); st.setString(2, s.dept); st.setFloat(3, s.marks); st.setInt(4, s.id);
+            System.out.println(st.executeUpdate() > 0 ? "Updated." : "ID not found.");
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    void delete(int id) {
+        try {
+            PreparedStatement st = conn.prepareStatement("DELETE FROM students WHERE id=?");
+            st.setInt(1, id);
+            System.out.println(st.executeUpdate() > 0 ? "Deleted." : "ID not found.");
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+}
+
+public class StudentApp {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        StudentController ctrl = new StudentController();
+
+        while (true) {
+            System.out.println("\n1.Add 2.View 3.Update 4.Delete 5.Exit\nChoose: ");
+            int ch = sc.nextInt(); sc.nextLine();
+            switch (ch) {
+                case 1 -> {
+                    System.out.print("Name: "); String n = sc.nextLine();
+                    System.out.print("Dept: "); String d = sc.nextLine();
+                    System.out.print("Marks: "); float m = sc.nextFloat();
+                    ctrl.add(new Student(0, n, d, m));
+                }
+                case 2 -> ctrl.view();
+                case 3 -> {
+                    System.out.print("ID: "); int i = sc.nextInt(); sc.nextLine();
+                    System.out.print("Name: "); String n = sc.nextLine();
+                    System.out.print("Dept: "); String d = sc.nextLine();
+                    System.out.print("Marks: "); float m = sc.nextFloat();
+                    ctrl.update(new Student(i, n, d, m));
+                }
+                case 4 -> {
+                    System.out.print("ID: "); int i = sc.nextInt();
+                    ctrl.delete(i);
+                }
+                case 5 -> { System.out.println("Bye!"); return; }
+                default -> System.out.println("Invalid");
+            }
+        }
+    }
+}
