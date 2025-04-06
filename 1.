@@ -1,0 +1,100 @@
+import sqlite3
+
+# Connect to SQLite database
+conn = sqlite3.connect("product_database.db")
+cursor = conn.cursor()
+
+# Create table if not exists
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS Product (
+    ProductID INTEGER PRIMARY KEY AUTOINCREMENT,
+    ProductName TEXT NOT NULL,
+    Price REAL NOT NULL,
+    Quantity INTEGER NOT NULL
+)
+''')
+conn.commit()
+
+def create_product():
+    try:
+        name = input("Enter Product Name: ")
+        price = float(input("Enter Price: "))
+        quantity = int(input("Enter Quantity: "))
+        with conn:
+            conn.execute("INSERT INTO Product (ProductName, Price, Quantity) VALUES (?, ?, ?)", 
+                         (name, price, quantity))
+        print("Product added successfully.\n")
+    except Exception as e:
+        print(f"Error: {e}")
+
+def read_products():
+    try:
+        cursor.execute("SELECT * FROM Product")
+        rows = cursor.fetchall()
+        if rows:
+            print("\nProduct List:")
+            for row in rows:
+                print(f"ID: {row[0]}, Name: {row[1]}, Price: {row[2]}, Quantity: {row[3]}")
+        else:
+            print("No products found.\n")
+    except Exception as e:
+        print(f"Error: {e}")
+
+def update_product():
+    try:
+        pid = int(input("Enter Product ID to update: "))
+        name = input("Enter new Product Name: ")
+        price = float(input("Enter new Price: "))
+        quantity = int(input("Enter new Quantity: "))
+        with conn:
+            cursor.execute("UPDATE Product SET ProductName=?, Price=?, Quantity=? WHERE ProductID=?",
+                           (name, price, quantity, pid))
+            if cursor.rowcount:
+                print("Product updated successfully.\n")
+            else:
+                print("Product ID not found.\n")
+    except Exception as e:
+        print(f"Error: {e}")
+
+def delete_product():
+    try:
+        pid = int(input("Enter Product ID to delete: "))
+        with conn:
+            cursor.execute("DELETE FROM Product WHERE ProductID=?", (pid,))
+            if cursor.rowcount:
+                print("Product deleted successfully.\n")
+            else:
+                print("Product ID not found.\n")
+    except Exception as e:
+        print(f"Error: {e}")
+
+def menu():
+    while True:
+        print("\n--- Product Management Menu ---")
+        print("1. Create Product")
+        print("2. Read Products")
+        print("3. Update Product")
+        print("4. Delete Product")
+        print("5. Exit")
+
+        choice = input("Enter your choice (1-5): ")
+
+        if choice == '1':
+            create_product()
+        elif choice == '2':
+            read_products()
+        elif choice == '3':
+            update_product()
+        elif choice == '4':
+            delete_product()
+        elif choice == '5':
+            print("Exiting program.")
+            break
+        else:
+            print("Invalid choice. Try again.\n")
+
+# Run menu
+menu()
+
+# Close connection on exit
+conn.close()
